@@ -132,15 +132,14 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
     # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
     try:
-        # Read only the first few bytes to get metadata
+        # Save the file properly
         pdf_path = os.path.join(temp_dir, file.filename)
-        chunk_size = 1024 * 1024  # 1MB chunks
         with open(pdf_path, "wb") as pdf_file:
-            # Read only first chunk
-            chunk = await file.read(chunk_size)
-            pdf_file.write(chunk)
+            # Read in small chunks to avoid memory issues
+            while chunk := await file.read(8192):  # 8KB chunks
+                pdf_file.write(chunk)
         
-        # Open PDF and get page count without loading all pages
+        # Open PDF and get page count
         with open(pdf_path, "rb") as f:
             pdf = PdfReader(f)
             total_pages = len(pdf.pages)
@@ -153,6 +152,7 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
             "totalPages": total_pages
         }
     finally:
+        # Clean up temporary directory
         shutil.rmtree(temp_dir)
 
 if __name__ == "__main__":
