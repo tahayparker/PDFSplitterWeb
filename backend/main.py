@@ -21,6 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"status": "ok"}
+
 def sanitize_filename(filename: str) -> str:
     # Remove file extension
     filename = os.path.splitext(filename)[0]
@@ -146,4 +150,4 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True) 
+    uvicorn.run(app, host="0.0.0.0", port=port) 
