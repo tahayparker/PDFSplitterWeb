@@ -186,6 +186,11 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
         shutil.rmtree(temp_dir)
         logger.info("Temporary directory cleaned up")
 
+@app.get("/api/health")
+async def health_check():
+    logger.info("Health check endpoint called")
+    return JSONResponse(content={"status": "ok"})
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
