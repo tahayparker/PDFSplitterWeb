@@ -16,13 +16,26 @@ export default function Home() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Auto-reset error, success, and cancelled states after 5 seconds
+  // Auto-reset error, success, cancelled states and form after 5 seconds
   useEffect(() => {
     if (error || success || cancelled) {
       const timer = setTimeout(() => {
+        // Reset all states
         if (error) setError(null);
         if (success) setSuccess(null);
         if (cancelled) setCancelled(false);
+        
+        // Reset form to clean state
+        setPagesPerSplit('1');
+        setSelectedFile(null);
+        setWarning(null);
+        setShowConfirmation(false);
+        setPendingFile(null);
+        
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }, 5000);
 
       return () => clearTimeout(timer);
@@ -64,6 +77,10 @@ export default function Home() {
 
       if (!isValid) {
         setError(message);
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         return;
       }
 
@@ -83,6 +100,11 @@ export default function Home() {
         setError('Error validating PDF file.');
       }
       console.error(err);
+      // Reset file input on error
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
       setIsValidating(false);
     }
