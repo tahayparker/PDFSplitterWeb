@@ -47,6 +47,24 @@ export default function Home() {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
   }, []);
 
+  // Add warm-up effect
+  useEffect(() => {
+    const warmUpServer = async () => {
+      try {
+        console.log('Warming up server...');
+        await axios.get('https://pdfsplitterweb.onrender.com/api/health', {
+          timeout: 10000 // 10 second timeout
+        });
+        console.log('Server warmed up successfully');
+      } catch (err) {
+        console.warn('Server warm-up failed:', err);
+        // Don't show error to user, this is a background operation
+      }
+    };
+
+    warmUpServer();
+  }, []); // Empty dependency array means this runs once when component mounts
+
   const handlePagesPerSplitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (value < 1) {
