@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    .glow-button {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .glow-button::before {
+        content: '';
+        position: absolute;
+        top: var(--y, 50%);
+        left: var(--x, 50%);
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, color-mix(in srgb, var(--button-green) 30%, transparent) 0%, transparent 60%);
+        transition: opacity 0.2s, transform 0.2s;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        opacity: 0;
+        z-index: 0;
+    }
+
+    .glow-button:hover::before {
+        opacity: 1;
+    }
+
+    .glow-button>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes fadeSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    :root {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        --background: 0 0% 100%;
+        --foreground: 0 0% 3.9%;
+        --dot-bg: #000000;
+        --dot-color: #4F5459;
+        --dot-size: 1px;
+        --dot-space: 22px;
+        --text-color: #000000;
+        --bg-color: #000000;
+        --button-green: #15803D;
+        --button-red: #B91C1C;
+    }
+
+    :root.light {
+        --dot-bg: #FFFFFF;
+        --dot-color: #000000;
+        --text-color: #000000;
+        --bg-color: #f0f0f0;
+        --button-green: #064E3B;
+        --button-red: #991B1B;
+    }
+
+    :root.dark {
+        --dot-bg: #000000;
+        --dot-color: #4F5459;
+        --text-color: #FFFFFF;
+        --bg-color: #000000;
+        --button-green: #16A34A;
+        --button-red: #DC2626;
+    }
+
+    html {
+        font-family: 'Parkinsans', sans-serif;
+        color: white;
+    }
+
+    body {
+        @apply font-parkinsans text-white;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        position: relative;
+        flex-grow: 1;
+        overflow-y: scroll;
+        scrollbar-width: none;
+        background:
+            linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+            linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+            var(--dot-color);
+        color: var(--text-color);
+    }
+
+    /* Remove arrows from number input */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+    .glow-button {
+        border-color: var(--button-green) !important;
+        color: var(--button-green) !important;
+    }
+
+    .glow-button-red {
+        border-color: var(--button-red) !important;
+        color: var(--button-red) !important;
+    }
+
+    .glow-button-red::before {
+        content: '';
+        position: absolute;
+        top: var(--y, 50%);
+        left: var(--x, 50%);
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, color-mix(in srgb, var(--button-red) 30%, transparent) 0%, transparent 60%);
+        transition: opacity 0.2s, transform 0.2s;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        opacity: 0;
+        z-index: 0;
+
+    }
+
+    .dotted-bg {
+        background:
+            linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+            linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+            var(--dot-color);
+        --dot-bg: #000000;
+        --dot-color: #FFFFFF;
+        --dot-size: 2px;
+        --dot-space: 15px;
+
+    }
+
+    .popup-bg {
+        background-color: #000000;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        background-position: -19px -19px;
+    }
+
+    :root.light .popup-bg {
+        background-color: #b3b3b3;
+        background-image: none;
+    }
+}
