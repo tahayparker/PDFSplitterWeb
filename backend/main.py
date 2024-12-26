@@ -132,12 +132,18 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
     # Create a temporary directory
     temp_dir = tempfile.mkdtemp()
     try:
+        # Read only the first few bytes to get metadata
         pdf_path = os.path.join(temp_dir, file.filename)
+        chunk_size = 1024 * 1024  # 1MB chunks
         with open(pdf_path, "wb") as pdf_file:
-            pdf_file.write(await file.read())
+            # Read only first chunk
+            chunk = await file.read(chunk_size)
+            pdf_file.write(chunk)
         
-        pdf = PdfReader(pdf_path)
-        total_pages = len(pdf.pages)
+        # Open PDF and get page count without loading all pages
+        with open(pdf_path, "rb") as f:
+            pdf = PdfReader(f)
+            total_pages = len(pdf.pages)
         
         is_valid, message, needs_confirmation = validate_split(total_pages, pages_per_split)
         return {
@@ -147,7 +153,7 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
             "totalPages": total_pages
         }
     finally:
-        shutil.rmtree(temp_dir) 
+        shutil.rmtree(temp_dir)
 
 if __name__ == "__main__":
     uvicorn.run(
