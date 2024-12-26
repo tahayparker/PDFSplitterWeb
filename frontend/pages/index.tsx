@@ -57,25 +57,34 @@ export default function Home() {
   };
 
   const validateAndUpload = async (file: File) => {
+    console.log(`Starting validation for file: ${file.name}, size: ${file.size} bytes`);
     setIsValidating(true);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('pages_per_split', pagesPerSplit);
 
     try {
+      console.log('Sending validation request to server...');
       const response = await axios.post(
         'https://pdfsplitterweb.onrender.com/api/validate-split', 
         formData,
         {
-          timeout: 60000, // 60 second timeout
+          timeout: 60000,
           headers: {
             'Content-Type': 'multipart/form-data',
-          }
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
+            console.log(`Upload progress: ${percentCompleted}%`);
+          },
         }
       );
+      console.log('Validation response received:', response.data);
+      
       const { isValid, message, needsConfirmation } = response.data;
 
       if (!isValid) {
+        console.log(`Validation failed: ${message}`);
         setError(message);
         setSelectedFile(null);
         if (fileInputRef.current) {
@@ -85,34 +94,52 @@ export default function Home() {
       }
 
       if (needsConfirmation) {
+        console.log('Confirmation needed:', message);
         setConfirmationMessage(message);
         setShowConfirmation(true);
         setPendingFile(file);
         return;
       }
 
-      // If no confirmation needed, proceed with upload
+      console.log('Proceeding with split operation');
       await processSplit(file);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
-        setError('Validation request timed out. Please try again.');
+      console.error('Validation error:', err);
+      if (axios.isAxiosError(err)) {
+        console.error('Axios error details:', {
+          code: err.code,
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        });
+        
+        if (err.code === 'ECONNABORTED') {
+          setError('Validation request timed out. Please try again.');
+        } else if (err.response) {
+          setError(`Error: ${err.response.data.detail || 'Unknown server error'}`);
+        } else if (err.request) {
+          setError('No response received from server. Please try again.');
+        } else {
+          setError('Error preparing request. Please try again.');
+        }
       } else {
-        setError('Error validating PDF file.');
+        setError('An unexpected error occurred.');
       }
-      console.error(err);
-      // Reset file input on error
+      
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } finally {
+      console.log('Validation process completed');
       setIsValidating(false);
     }
   };
 
   const processSplit = async (file: File) => {
+    console.log(`Starting split process for file: ${file.name}`);
     setIsLoading(true);
-    setShowConfirmation(false); // Hide popup immediately
+    setShowConfirmation(false);
     setPendingFile(null);
     
     const formData = new FormData();
@@ -120,10 +147,20 @@ export default function Home() {
     formData.append('pages_per_split', pagesPerSplit);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/split-pdf', formData, {
-        responseType: 'blob',
-      });
+      console.log('Sending split request to server...');
+      const response = await axios.post(
+        'https://pdfsplitterweb.onrender.com/api/split-pdf',
+        formData,
+        {
+          responseType: 'blob',
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total!);
+            console.log(`Upload progress: ${percentCompleted}%`);
+          },
+        }
+      );
 
+      console.log('Split response received, preparing download');
       const baseFilename = file.name.replace(/\.pdf$/i, '');
       const zipFilename = `${baseFilename}_split.zip`;
 
@@ -135,27 +172,40 @@ export default function Home() {
       link.click();
       link.remove();
       
+      console.log('Download initiated');
       setSuccess('PDF split successfully! Downloading zip file...');
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data) {
-        // Convert blob error response to text
-        const blob = new Blob([err.response.data]);
-        const text = await blob.text();
-        try {
-          const errorData = JSON.parse(text);
-          setError(errorData.detail || 'An error occurred while splitting the PDF.');
-        } catch {
+      console.error('Split error:', err);
+      if (axios.isAxiosError(err)) {
+        console.error('Axios error details:', {
+          code: err.code,
+          message: err.message,
+          response: err.response?.status
+        });
+
+        if (err.response?.data) {
+          const blob = new Blob([err.response.data]);
+          const text = await blob.text();
+          try {
+            const errorData = JSON.parse(text);
+            setError(errorData.detail || 'An error occurred while splitting the PDF.');
+          } catch (parseErr) {
+            console.error('Error parsing error response:', parseErr);
+            setError('An error occurred while splitting the PDF.');
+          }
+        } else {
           setError('An error occurred while splitting the PDF.');
         }
       } else {
-        setError('An error occurred while splitting the PDF.');
+        console.error('Unknown error:', err);
+        setError('An unexpected error occurred while splitting the PDF.');
       }
-      console.error(err);
     } finally {
+      console.log('Split process completed');
       setIsLoading(false);
     }
   };
