@@ -48,7 +48,7 @@ export default function Home() {
     formData.append('pages_per_split', pagesPerSplit);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/validate-split', formData);
+      const response = await axios.post('https://pdfsplitterweb.onrender.com/api/validate-split', formData);
       const { isValid, message, needsConfirmation } = response.data;
 
       if (!isValid) {
