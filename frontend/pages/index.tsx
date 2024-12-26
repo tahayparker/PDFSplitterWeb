@@ -14,6 +14,7 @@ export default function Home() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [cancelled, setCancelled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Auto-reset error, success, and cancelled states after 5 seconds
   useEffect(() => {
@@ -43,12 +44,22 @@ export default function Home() {
   };
 
   const validateAndUpload = async (file: File) => {
+    setIsValidating(true);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('pages_per_split', pagesPerSplit);
 
     try {
-      const response = await axios.post('https://pdfsplitterweb.onrender.com/api/validate-split', formData);
+      const response = await axios.post(
+        'https://pdfsplitterweb.onrender.com/api/validate-split', 
+        formData,
+        {
+          timeout: 60000, // 60 second timeout
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
       const { isValid, message, needsConfirmation } = response.data;
 
       if (!isValid) {
@@ -66,8 +77,14 @@ export default function Home() {
       // If no confirmation needed, proceed with upload
       await processSplit(file);
     } catch (err) {
-      setError('Error validating PDF file.');
+      if (axios.isAxiosError(err) && err.code === 'ECONNABORTED') {
+        setError('Validation request timed out. Please try again.');
+      } else {
+        setError('Error validating PDF file.');
+      }
       console.error(err);
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -344,10 +361,10 @@ export default function Home() {
                 <label
                   htmlFor="file-upload"
                   className={`${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : 'glow-button'
+                    isLoading || isValidating ? 'opacity-50 cursor-not-allowed' : 'glow-button'
                   } px-10 py-4 border-2 rounded-full transition-all duration-200 min-w-[200px] text-lg cursor-pointer inline-block`}
                 >
-                  {isLoading ? 'Processing...' : 'Upload & Split PDF'}
+                  {isLoading ? 'Processing...' : isValidating ? 'Validating...' : 'Upload & Split PDF'}
                 </label>
               </div>
               <button
