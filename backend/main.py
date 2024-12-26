@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, Form, BackgroundTasks, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import tempfile
@@ -22,8 +22,9 @@ app.add_middleware(
 )
 
 @app.get("/")
+@app.head("/")
 async def root():
-    return {"status": "ok"}
+    return JSONResponse(content={"status": "ok"})
 
 def sanitize_filename(filename: str) -> str:
     # Remove file extension
@@ -149,5 +150,10 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
         shutil.rmtree(temp_dir) 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    uvicorn.run(app, host="0.0.0.0", port=port) 
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    ) 
