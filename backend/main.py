@@ -8,13 +8,14 @@ import zipfile
 import re
 import shutil
 import math
+import uvicorn
 
 app = FastAPI()
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://PDFSplitter.vercel.app"],
+    allow_origins=["https://PDFSplitter.vercel.app", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -142,3 +143,7 @@ async def validate_pdf_split(file: UploadFile, pages_per_split: int = Form(...))
         }
     finally:
         shutil.rmtree(temp_dir) 
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True) 
